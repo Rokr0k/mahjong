@@ -1,0 +1,35 @@
+<!DOCTYPE html>
+<html lang="zh-tw">
+
+<head>
+    <meta charset="UTF-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>麻將</title>
+    <link rel="stylesheet" href="/css/index.css">
+</head>
+
+<body>
+    <div id="header">
+        <h1>麻將</h1>
+    </div>
+    <div id="container">
+        <div>
+                麻將是中國傳統遊戲。<br>
+            <a href="/list">開始</a>
+        </div>
+    </div>
+    <div id="background"></div>
+</body>
+<script>
+    const san = [...Array(42).keys(), ...Array(34).keys(), ...Array(34).keys(), ...Array(34).keys()];
+    san.map(value => ({ value, sort: Math.random() })).sort((a, b) => a.sort - b.sort).map(({ value }) => value).forEach(i => {
+        const card = document.createElement("div");
+        document.getElementById('background').appendChild(card);
+        card.className = "mahjong";
+        card.innerHTML = `&#${126976 + i};`;
+        card.style.transform = `translate(${Math.random() * (1 - card.clientWidth / window.innerWidth) * 100}vw, ${Math.random() * (1 - card.clientHeight / window.innerHeight) * 100}vh)`;
+    });
+</script>
+
+</html>

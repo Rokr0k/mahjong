@@ -1,0 +1,65 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>麻將</title>
+    <link rel="stylesheet" href="/css/list.css">
+    <script src="/socket.io/socket.io.js"></script>
+</head>
+
+<body>
+    <div id="create">
+        <input type="text" id="name" placeholder="遊戲房的名字">
+        <select id="type">
+            <option value="zh">國標麻將</option>
+            <option value="jp">立起麻將</option>
+        </select>
+        <input type="button" onclick="createRoom()" value="創建遊戲房">
+    </div>
+    <div id="list">
+        <div id="rooms">
+        </div>
+    </div>
+</body>
+
+<script>
+    const socket = io("/list");
+
+    const roomsElement = document.getElementById("rooms");
+
+    function createItem(id, room) {
+        const item = document.createElement("a");
+        item.id = `item-${id}`;
+        item.className = "item";
+        item.href = `/room?roomid=${id}`;
+        item.innerHTML = `<div class="name">${room.name}</div><div class="type">${room.type}</div><div class="limit">${4 - room.members.length}</div>`;
+        return item;
+    }
+
+    for(const [id, room] of Object.entries(<%- JSON.stringify(rooms) %>)) {
+        roomsElement.appendChild(createItem(id, room));
+    }
+    
+    socket.on("new room", (id, room) => {
+        roomsElement.appendChild(createItem(id, room));
+    });
+
+    socket.on("update room", (id, members) => {
+        document.getElementById(`item-${id}`).getElementsByClassName('limit')[0].innerHTML = (4 - members).toString();
+    });
+
+    socket.on("delete room", id => {
+        document.getElementById(`item-${id}`).remove();
+    });
+
+    function createRoom() {
+        socket.emit("create room", {name: document.getElementById('name').value, type: document.getElementById('type').value}, id => {
+            location.href = `/room?roomid=${id}`;
+        });
+    }
+</script>
+
+</html>

@@ -1,0 +1,28 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>麻將 - <%= room.name %></title>
+    <script src="/socket.io/socket.io.js"></script>
+</head>
+<body>
+    <div id="members"><%= room.members.length + 1 %></div>
+</body>
+<script>
+    const roomid = "<%= id %>";
+    
+    const socket = io("/room");
+
+    socket.emit("join room", roomid);
+
+    socket.on("update members", members => {
+        document.getElementById("members").innerHTML = members;
+    });
+
+    socket.on("disconnect", () => {
+        history.back();
+    });
+</script>
+</html>
