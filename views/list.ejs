@@ -6,17 +6,29 @@
     <meta http-equiv="X-UA-Compatible" content="IE=edge">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>麻將</title>
-    <link rel="stylesheet" href="/css/list.css">
     <script src="/socket.io/socket.io.js"></script>
+    <style>
+        #list {
+            display: flex;
+            justify-content: center;
+        }
+
+        .item {
+            display: block;
+            background: #dfdf8f;
+            margin: 10px;
+            padding: 10px;
+            border-radius: 10px;
+            font-size: 20px;
+            color: black;
+            text-decoration: none;
+        }
+    </style>
 </head>
 
 <body>
     <div id="create">
         <input type="text" id="name" placeholder="遊戲房的名字">
-        <select id="type">
-            <option value="zh">國標麻將</option>
-            <option value="jp">立起麻將</option>
-        </select>
         <input type="button" onclick="createRoom()" value="創建遊戲房">
     </div>
     <div id="list">
@@ -34,15 +46,15 @@
         const item = document.createElement("a");
         item.id = `item-${id}`;
         item.className = "item";
-        item.href = `/room?roomid=${id}`;
-        item.innerHTML = `<div class="name">${room.name}</div><div class="type">${room.type}</div><div class="limit">${4 - room.members.length}</div>`;
+        item.href = `/room?id=${id}`;
+        item.innerHTML = `<div class="name">${room.name}</div><div class="limit">${4 - room.members.length}</div>`;
         return item;
     }
 
-    for(const [id, room] of Object.entries(<%- JSON.stringify(rooms) %>)) {
+    for (const [id, room] of Object.entries(<%- JSON.stringify(rooms) %>)) {
         roomsElement.appendChild(createItem(id, room));
     }
-    
+
     socket.on("new room", (id, room) => {
         roomsElement.appendChild(createItem(id, room));
     });
@@ -56,8 +68,8 @@
     });
 
     function createRoom() {
-        socket.emit("create room", {name: document.getElementById('name').value, type: document.getElementById('type').value}, id => {
-            location.href = `/room?roomid=${id}`;
+        socket.emit("create room", document.getElementById('name').value, id => {
+            location.href = `/room?id=${id}`;
         });
     }
 </script>

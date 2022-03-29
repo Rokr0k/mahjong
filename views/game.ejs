@@ -1,0 +1,87 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Document</title>
+    <script src="/socket.io/socket.io.js"></script>
+    <style>
+        #cvs {
+            margin: 0;
+            padding: 0;
+            position: fixed;
+            top: 0;
+            left: 0;
+            bottom: 0;
+            right: 0;
+        }
+    </style>
+</head>
+
+<body>
+    <canvas id="cvs"></canvas>
+</body>
+<script>
+    const gameid = "<%= id %>";
+
+    const socket = io("/game");
+
+    const fens = {
+        0: "東",
+        1: "北",
+        2: "西",
+        3: "南",
+    };
+
+    const pais = {
+        f0: "🀀", f1: "🀁", f2: "🀂", f3: "🀃", y0: "🀄", y1: "🀅", y2: "🀆",
+        w0: "🀇", w1: "🀈", w2: "🀉", w3: "🀊", w4: "🀋", w5: "🀌", w6: "🀍", w7: "🀎", w8: "🀏",
+        s0: "🀐", s1: "🀑", s2: "🀒", s3: "🀓", s4: "🀔", s5: "🀕", s6: "🀖", s7: "🀗", s8: "🀘",
+        t0: "🀙", t1: "🀚", t2: "🀛", t3: "🀜", t4: "🀝", t5: "🀞", t6: "🀟", t7: "🀠", t8: "🀡",
+        h0: "🀢", h1: "🀣", h2: "🀤", h3: "🀥", h4: "🀦", h5: "🀧", h6: "🀨", h7: "🀩", ur: "🀫",
+    };
+
+    const player = {
+        id: -1,
+        shoupai: [],
+    };
+
+    const cvs = document.getElementById('cvs');
+    const ctx = cvs.getContext('2d');
+
+    socket.emit("join game", gameid);
+
+    socket.on("start game", (playerId, shoupai) => {
+        player.id = playerId;
+        player.shoupai = shoupai;
+        draw();
+    });
+
+    function draw() {
+        const w = cvs.width = window.innerWidth;
+        const h = cvs.height = window.innerHeight;
+        ctx.fillStyle = "green";
+        ctx.fillRect(0, 0, w, h);
+        ctx.fillStyle = "white";
+        ctx.font = `${h / 10}px Arial`;
+        ctx.textAlign = 'left';
+        ctx.textBaseline = 'bottom';
+        ctx.fillText(fens[player.id], 0, h);
+        ctx.font = `${h / 8}px Arial`;
+        ctx.textAlign = 'center';
+        ctx.textBaseline = 'middle';
+        player.shoupai.forEach((hai, i) => {
+            ctx.fillText(pais[hai], w * (5 / 6 - i / 18), h * 4 / 5);
+        });
+        requestAnimationFrame(draw);
+    }
+
+    socket.on("disconnect", () => {
+        alert("Someone left the game!");
+        location.href = "/list";
+    });
+</script>
+
+</html>

@@ -21,8 +21,12 @@
         document.getElementById("members").innerHTML = members;
     });
 
+    socket.on("start game", id => {
+        location.href = `/game?id=${id}`;
+    });
+
     socket.on("disconnect", () => {
-        history.back();
+        location.href = "/list";
     });
 </script>
 </html>

@@ -6,7 +6,42 @@
     <meta http-equiv="X-UA-Compatible" content="IE=edge">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>麻將</title>
-    <link rel="stylesheet" href="/css/index.css">
+    <style>
+        #header h1 {
+            font-size: 100px;
+            margin: 0;
+            text-align: center;
+        }
+
+        #container {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            font-size: 30px;
+        }
+
+        #container div {
+            margin: 10px;
+            padding: 10px;
+            background: #ffffdfef;
+        }
+
+        #background {
+            position: fixed;
+            z-index: -1;
+            top: 0;
+            left: 0;
+            font-size: 100px;
+            user-select: none;
+        }
+
+        #background div {
+            position: absolute;
+            top: 0;
+            left: 0;
+            transition-duration: 1s;
+        }
+    </style>
 </head>
 
 <body>
@@ -15,7 +50,7 @@
     </div>
     <div id="container">
         <div>
-                麻將是中國傳統遊戲。<br>
+            麻將是中國傳統遊戲。<br>
             <a href="/list">開始</a>
         </div>
     </div>
@@ -28,8 +63,14 @@
         document.getElementById('background').appendChild(card);
         card.className = "mahjong";
         card.innerHTML = `&#${126976 + i};`;
-        card.style.transform = `translate(${Math.random() * (1 - card.clientWidth / window.innerWidth) * 100}vw, ${Math.random() * (1 - card.clientHeight / window.innerHeight) * 100}vh)`;
+        card.style.transform = `translate(${Math.random() * (1 - card.clientWidth / window.innerWidth) * 100}vw, ${Math.random() * (1 - card.clientHeight / window.innerHeight) * 100}vh) rotate(${Math.random()}turn)`;
     });
+
+    setInterval(() => {
+        for (const card of document.getElementById('background').children) {
+            card.style.transform = `translate(${Math.random() * (1 - card.clientWidth / window.innerWidth) * 100}vw, ${Math.random() * (1 - card.clientHeight / window.innerHeight) * 100}vh) rotate(${Math.random()}turn)`;
+        }
+    }, 2000);
 </script>
 
 </html>
