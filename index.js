@@ -160,12 +160,12 @@ const initialPai = [
 
 function paiCompare(a, b) {
     const order = {
-        "f": 0,
-        "y": 1,
-        "w": 2,
-        "s": 3,
-        "t": 4,
-        "h": 5,
+        "f": 1,
+        "y": 2,
+        "w": 3,
+        "s": 4,
+        "t": 5,
+        "h": 6,
     };
     if (order[a[0]] != order[b[0]]) {
         return order[a[0]] - order[b[0]];
@@ -214,10 +214,10 @@ io.of("/room").on('connection', socket => {
             rooms[id].members.push(socket.id);
             if (rooms[id].members.length < 4) {
                 io.of("/list").emit("update room", id, rooms[id].members.length);
-                socket.to(rooms[id].members).emit("update members", rooms[id].members.length);
+                socket.broadcast.to(rooms[id].members).emit("update members", rooms[id].members.length);
             } else {
                 const gameid = uuidv4();
-                games[gameid] = { members: [], pai: [...initialPai], shou: [[], [], [], []], hua: [[],[],[],[]], score: [0, 0, 0, 0], wins: [0, 0, 0, 0], order: 0 };
+                games[gameid] = { members: [], pai: [...initialPai], shou: [[], [], [], []], hua: [[], [], [], []], extra: "", thrown: [], stole: [[], [], [], []], score: [0, 0, 0, 0], wins: [0, 0, 0, 0], order: 0, answer: [-1, -1, -1, -1] };
                 io.of("/room").to(rooms[id].members).emit("start game", gameid);
                 delete rooms[id];
                 io.of("/list").emit("delete room", id);
@@ -232,7 +232,7 @@ io.of("/room").on('connection', socket => {
             rooms[id].members.splice(rooms[id].members.findIndex(member => member == socket.id), 1);
             if (rooms[id].members.length > 0) {
                 io.of("/list").emit("update room", id, rooms[id].members.length);
-                socket.to(rooms[id].members).emit("update members", rooms[id].members.length);
+                socket.broadcast.to(rooms[id].members).emit("update members", rooms[id].members.length);
             } else {
                 delete rooms[id];
                 io.of("/list").emit("delete room", id);
@@ -254,27 +254,112 @@ io.of("/game").on('connection', socket => {
                     }
                 }
                 for (let i = 0; i < 4; i++) {
-                    for(let j=0; j<13; j++) {
-                        while(games[id].shou[i][j].match(/^h[0-7]$/)) {
+                    for (let j = 0; j < 13; j++) {
+                        while (games[id].shou[i][j].match(/^h[0-7]$/)) {
                             games[id].hua[i].push(games[id].shou[i][j]);
                             games[id].shou[i].splice(j, 1, games[id].pai.shift());
                         }
                     }
                     games[id].shou[i].sort(paiCompare);
                 }
+                games[id].extra = games[id].pai.shift();
+                while (games[id].extra.match(/^h[0-7]$/)) {
+                    games[id].hua[games[id].order].push(games[id].extra);
+                    games[id].extra = games[id].pai.shift();
+                }
                 for (const [index, member] of games[id].members.entries()) {
                     io.of("/game").to(member).emit("start game", index, games[id].shou[index], games[id].hua);
                 }
-                
-                games[id].shou[games[id].order][13] = games[id].pai.shift();
-                while(games[id].shou[games[id].order][13].match(/^h[0-7]$/)) {
-                    games[id].hua[games[id].order].push(games[id].shou[games[id].order][13]);
-                    games[id].shou[games[id].order][13] = games[id].pai.shift();
-                }
-                io.of("/game").to(games[id].members[games[id].order]).emit("your turn", games[id].shou[games[id].order], games[id].hua[games[id].order]);
+                io.of("/game").to(games[id].members[games[id].order]).emit("your turn", games[id].extra);
             }
         } else {
             socket.disconnect(true);
+        }
+    });
+    socket.on("throw", (gameid, playid, selection) => {
+        games[gameid].answer[playid] = selection;
+        if (selection < 13) {
+            [games[gameid].shou[playid][selection], games[gameid].extra] = [games[gameid].extra, games[gameid].shou[playid][selection]];
+        }
+        games[gameid].shou[playid].sort(paiCompare);
+        socket.broadcast.to(games[gameid].members).emit("question", playid, games[gameid].extra, selection < 13);
+    });
+    socket.on("answer", (gameid, playid, selection) => {
+        games[gameid].answer[playid] = selection;
+        if (games[gameid].answer.filter(a => a < 0).length == 0) {
+            const precedence = {
+                0: 0,
+                1: 0,
+                2: 0,
+                3: 0,
+                4: 0,
+                5: 0,
+                6: 0,
+                7: 0,
+                8: 0,
+                9: 0,
+                10: 0,
+                11: 0,
+                12: 0,
+                13: 0,
+                15: 2,
+                16: 1,
+                17: 1,
+                18: 1,
+                19: 2,
+            };
+            let choosenOne = games[gameid].order;
+            for (let i = 1; i < 4; i++) {
+                if (precedence[games[gameid].answer[(games[gameid].order + i) % 4]] > precedence[games[gameid].answer[choosenOne]]) {
+                    choosenOne = (games[gameid].order + i) % 4;
+                }
+            }
+            if (choosenOne == games[gameid].order) {
+                games[gameid].thrown.push(games[gameid].extra);
+                games[gameid].extra = "";
+            } else {
+                switch (games[gameid].answer[choosenOne]) {
+                    case 15:
+                        games[gameid].shou[choosenOne].splice(games[gameid].shou[choosenOne].findIndex(hai => hai == games[gameid].extra), 2);
+                        games[gameid].stole[choosenOne].push({ type: "p", pai: games[gameid].extra, dir: games[gameid].order - choosenOne });
+                        games[gameid].extra = "";
+                        break;
+                    case 16:
+                        games[gameid].shou[choosenOne].splice(games[gameid].shou[choosenOne].findIndex(hai => hai == games[gameid].extra[0] + (games[gameid].extra[1] - -1)), 1);
+                        games[gameid].shou[choosenOne].splice(games[gameid].shou[choosenOne].findIndex(hai => hai == games[gameid].extra[0] + (games[gameid].extra[1] - -2)), 1);
+                        games[gameid].stole[choosenOne].push({ type: "c", pai: games[gameid].extra[0] + (games[gameid].extra[1] - -1), dir: games[gameid].order - choosenOne });
+                        games[gameid].extra = "";
+                        break;
+                    case 17:
+                        games[gameid].shou[choosenOne].splice(games[gameid].shou[choosenOne].findIndex(hai => hai == games[gameid].extra[0] + (games[gameid].extra[1] - 1)), 1);
+                        games[gameid].shou[choosenOne].splice(games[gameid].shou[choosenOne].findIndex(hai => hai == games[gameid].extra[0] + (games[gameid].extra[1] - -1)), 1);
+                        games[gameid].stole[choosenOne].push({ type: "c", pai: games[gameid].extra, dir: games[gameid].order - choosenOne });
+                        games[gameid].extra = "";
+                        break;
+                    case 18:
+                        games[gameid].shou[choosenOne].splice(games[gameid].shou[choosenOne].findIndex(hai => hai == games[gameid].extra[0] + (games[gameid].extra[1] - 2)), 1);
+                        games[gameid].shou[choosenOne].splice(games[gameid].shou[choosenOne].findIndex(hai => hai == games[gameid].extra[0] + (games[gameid].extra[1] - 1)), 1);
+                        games[gameid].stole[choosenOne].push({ type: "c", pai: games[gameid].extra[0] + (games[gameid].extra[1] - 1), dir: games[gameid].order - choosenOne });
+                        games[gameid].extra = "";
+                        break;
+                    case 19:
+                        games[gameid].shou[choosenOne].splice(games[gameid].shou[choosenOne].findIndex(games[gameid].extra), 3);
+                        games[gameid].stole[choosenOne].push({ type: "g", pai: games[gameid].extra, dir: games[gameid].order - choosenOne });
+                        games[gameid].extra = "";
+                        break;
+                }
+            }
+            games[gameid].answer = [-1, -1, -1, -1];
+            games[gameid].order = (games[gameid].order + 1) % 4;
+            games[gameid].extra = games[gameid].pai.shift();
+            while (games[gameid].extra.match(/^h[0-7]$/)) {
+                games[gameid].hua[games[gameid].order].push(games[gameid].extra);
+                games[gameid].extra = games[gameid].pai.shift();
+            }
+            for (const [index, member] of games[gameid].members.entries()) {
+                io.of("/game").to(member).emit("next turn", games[gameid].shou[index], games[gameid].stole[index], games[gameid].thrown, games[gameid].hua);
+            }
+            io.of("/game").to(games[gameid].members[games[gameid].order]).emit("your turn", games[gameid].extra);
         }
     });
     socket.on("disconnecting", () => {
@@ -282,11 +367,7 @@ io.of("/game").on('connection', socket => {
         if (id) {
             const members = [...games[id].members];
             delete games[id];
-            for (const member of members) {
-                if (member != socket.id) {
-                    io.of("/game").sockets.get(member).disconnect(true);
-                }
-            }
+            socket.broadcast.to(members).disconnectSockets(true);
         }
     });
 });
