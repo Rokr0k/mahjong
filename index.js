@@ -217,7 +217,7 @@ io.of("/room").on('connection', socket => {
                 socket.to(rooms[id].members).emit("update members", rooms[id].members.length);
             } else {
                 const gameid = uuidv4();
-                games[gameid] = { members: [], pai: [...initialPai], shou: [[], [], [], []], score: [0, 0, 0, 0], wins: [0, 0, 0, 0], order: 0 };
+                games[gameid] = { members: [], pai: [...initialPai], shou: [[], [], [], []], hua: [[],[],[],[]], score: [0, 0, 0, 0], wins: [0, 0, 0, 0], order: 0 };
                 io.of("/room").to(rooms[id].members).emit("start game", gameid);
                 delete rooms[id];
                 io.of("/list").emit("delete room", id);
@@ -252,11 +252,26 @@ io.of("/game").on('connection', socket => {
                     for (let j = 0; j < 13; j++) {
                         games[id].shou[i].push(games[id].pai.shift());
                     }
+                }
+                for (let i = 0; i < 4; i++) {
+                    for(let j=0; j<13; j++) {
+                        while(games[id].shou[i][j].match(/^h[0-7]$/)) {
+                            games[id].hua[i].push(games[id].shou[i][j]);
+                            games[id].shou[i].splice(j, 1, games[id].pai.shift());
+                        }
+                    }
                     games[id].shou[i].sort(paiCompare);
                 }
-                for (const [index, member] of Object.entries(games[id].members)) {
-                    io.of("/game").to(member).emit("start game", index, games[id].shou[index]);
+                for (const [index, member] of games[id].members.entries()) {
+                    io.of("/game").to(member).emit("start game", index, games[id].shou[index], games[id].hua);
                 }
+                
+                games[id].shou[games[id].order][13] = games[id].pai.shift();
+                while(games[id].shou[games[id].order][13].match(/^h[0-7]$/)) {
+                    games[id].hua[games[id].order].push(games[id].shou[games[id].order][13]);
+                    games[id].shou[games[id].order][13] = games[id].pai.shift();
+                }
+                io.of("/game").to(games[id].members[games[id].order]).emit("your turn", games[id].shou[games[id].order], games[id].hua[games[id].order]);
             }
         } else {
             socket.disconnect(true);

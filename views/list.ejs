@@ -47,7 +47,7 @@
         item.id = `item-${id}`;
         item.className = "item";
         item.href = `/room?id=${id}`;
-        item.innerHTML = `<div class="name">${room.name}</div><div class="limit">${4 - room.members.length}</div>`;
+        item.innerHTML = `<div class="name">${room.name}</div><div><span class="limit">${room.members.length}</span>/4</div>`;
         return item;
     }
 
@@ -60,7 +60,7 @@
     });
 
     socket.on("update room", (id, members) => {
-        document.getElementById(`item-${id}`).getElementsByClassName('limit')[0].innerHTML = (4 - members).toString();
+        document.getElementById(`item-${id}`).getElementsByClassName('limit')[0].innerHTML = members.toString();
     });
 
     socket.on("delete room", id => {

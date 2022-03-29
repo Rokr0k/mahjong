@@ -5,7 +5,7 @@
     <meta charset="UTF-8">
     <meta http-equiv="X-UA-Compatible" content="IE=edge">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Document</title>
+    <title>麻將 - 遊戲中</title>
     <script src="/socket.io/socket.io.js"></script>
     <style>
         #cvs {
@@ -36,16 +36,19 @@
     };
 
     const pais = {
-        f0: "🀀", f1: "🀁", f2: "🀂", f3: "🀃", y0: "🀄", y1: "🀅", y2: "🀆",
-        w0: "🀇", w1: "🀈", w2: "🀉", w3: "🀊", w4: "🀋", w5: "🀌", w6: "🀍", w7: "🀎", w8: "🀏",
-        s0: "🀐", s1: "🀑", s2: "🀒", s3: "🀓", s4: "🀔", s5: "🀕", s6: "🀖", s7: "🀗", s8: "🀘",
-        t0: "🀙", t1: "🀚", t2: "🀛", t3: "🀜", t4: "🀝", t5: "🀞", t6: "🀟", t7: "🀠", t8: "🀡",
-        h0: "🀢", h1: "🀣", h2: "🀤", h3: "🀥", h4: "🀦", h5: "🀧", h6: "🀨", h7: "🀩", ur: "🀫",
+        "f0": "🀀", "f1": "🀁", "f2": "🀂", "f3": "🀃", "y0": "🀄", "y1": "🀅", "y2": "🀆",
+        "w0": "🀇", "w1": "🀈", "w2": "🀉", "w3": "🀊", "w4": "🀋", "w5": "🀌", "w6": "🀍", "w7": "🀎", "w8": "🀏",
+        "s0": "🀐", "s1": "🀑", "s2": "🀒", "s3": "🀓", "s4": "🀔", "s5": "🀕", "s6": "🀖", "s7": "🀗", "s8": "🀘",
+        "t0": "🀙", "t1": "🀚", "t2": "🀛", "t3": "🀜", "t4": "🀝", "t5": "🀞", "t6": "🀟", "t7": "🀠", "t8": "🀡",
+        "h0": "🀢", "h1": "🀣", "h2": "🀤", "h3": "🀥", "h4": "🀦", "h5": "🀧", "h6": "🀨", "h7": "🀩", "ur": "🀫",
     };
 
     const player = {
         id: -1,
         shoupai: [],
+        huapai: [[], [], [], []],
+        turn: false,
+        thrown: false,
     };
 
     const cvs = document.getElementById('cvs');
@@ -53,33 +56,126 @@
 
     socket.emit("join game", gameid);
 
-    socket.on("start game", (playerId, shoupai) => {
-        player.id = playerId;
+    socket.on("start game", (playerId, shoupai, huapai) => {
+        player.id = +playerId;
         player.shoupai = shoupai;
+        player.huapai = huapai;
         draw();
     });
+
+    socket.on("your turn", (shoupai, huapai) => {
+        player.shoupai = shoupai;
+        player.huapai[player.id] = huapai;
+        player.turn = true;
+        player.thrown = false;
+    });
+
+    let selection = -1;
 
     function draw() {
         const w = cvs.width = window.innerWidth;
         const h = cvs.height = window.innerHeight;
         ctx.fillStyle = "green";
         ctx.fillRect(0, 0, w, h);
-        ctx.fillStyle = "white";
+
+        ctx.fillStyle = player.turn ? "red" : "white";
         ctx.font = `${h / 10}px Arial`;
-        ctx.textAlign = 'left';
-        ctx.textBaseline = 'bottom';
-        ctx.fillText(fens[player.id], 0, h);
-        ctx.font = `${h / 8}px Arial`;
         ctx.textAlign = 'center';
+        ctx.textBaseline = 'bottom';
+        ctx.fillText(fens[player.id], w / 2, h);
+
+        ctx.fillStyle = "white";
+        ctx.font = `${h / 8}px Arial`;
         ctx.textBaseline = 'middle';
-        player.shoupai.forEach((hai, i) => {
-            ctx.fillText(pais[hai], w * (5 / 6 - i / 18), h * 4 / 5);
+        player.shoupai.slice(0, 13).forEach((hai, i) => {
+            ctx.fillText(pais[hai], w * (1 / 6 + i / 18), h * 4 / 5);
+            if (selection == i) {
+                ctx.fillStyle = "#FFD70080";
+                ctx.fillRect(w * (5 / 36 + i / 18), h * 59 / 80, w / 18, h / 8);
+                ctx.fillStyle = "white";
+            }
         });
+        
+        if (player.shoupai.length > 13) {
+            ctx.save();
+            ctx.translate(w * 2 / 3, h * 13 / 20);
+            ctx.rotate(-Math.PI / 2);
+            ctx.fillText(pais[player.shoupai[13]], 0, 0);
+            if (selection == 13) {
+                ctx.fillStyle = "#FFD70080";
+                ctx.fillRect(-w / 36, -h / 16, w / 18, h / 8);
+                ctx.fillStyle = "white";
+            }
+            ctx.restore();
+        }
+
+        ctx.font = `${h / 12}px Arial`;
+        ctx.textAlign = 'right';
+        ctx.textBaseline = 'bottom';
+        player.huapai[player.id].forEach((hai, i) => {
+            ctx.fillText(pais[hai], w * (1 - i * 2 / 60), h);
+        });
+
+        ctx.save();
+        ctx.translate(w / 2, h / 2);
+        ctx.rotate(-Math.PI / 2);
+        ctx.translate(-h / 2, -w / 2);
+        player.huapai[(player.id + 1) % 4].forEach((hai, i) => {
+            ctx.fillText(pais[hai], h - w * i * 2 / 60, w);
+        });
+        ctx.restore();
+        ctx.save();
+        ctx.translate(w / 2, h / 2);
+        ctx.rotate(Math.PI);
+        ctx.translate(-w / 2, -h / 2);
+        player.huapai[(player.id + 2) % 4].forEach((hai, i) => {
+            ctx.fillText(pais[hai], w * (1 - i * 2 / 60), h);
+        });
+        ctx.restore();
+        ctx.save();
+        ctx.translate(w / 2, h / 2);
+        ctx.rotate(Math.PI / 2);
+        ctx.translate(-h / 2, -w / 2);
+        player.huapai[(player.id + 3) % 4].forEach((hai, i) => {
+            ctx.fillText(pais[hai], h - w * i * 2 / 60, w);
+        });
+        ctx.restore();
+
         requestAnimationFrame(draw);
     }
 
+    window.onmousemove = e => {
+        const x = e.offsetX;
+        const y = e.offsetY;
+        const w = cvs.width;
+        const h = cvs.height;
+        if (player.turn && !player.thrown) {
+            if (y > h * 59 / 80 && y < h * 69 / 80) {
+                if (x > w * 5 / 36 && x < w * 31 / 36) {
+                    selection = Math.floor((x / w - 5 / 36) * 18);
+                } else {
+                    selection = -1;
+                }
+            } else if (y > h * 13 / 20 - w / 36 && y < h * 13 / 20 + w / 36 && x > w * 2 / 3 - h / 16 && x < w * 2 / 3 + h / 16) {
+                selection = 13;
+            } else {
+                selection = -1;
+            }
+        }
+    };
+
+    window.onclick = e => {
+        if(player.turn) {
+            if(!player.thrown) {
+                socket.emit("throw", gameid, selection);
+                player.thrown = true;
+                selection = -1;
+            }
+        }
+    }
+
     socket.on("disconnect", () => {
-        alert("Someone left the game!");
+        alert("有人離開了遊戲!");
         location.href = "/list";
     });
 </script>

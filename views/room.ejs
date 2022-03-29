@@ -6,9 +6,31 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>麻將 - <%= room.name %></title>
     <script src="/socket.io/socket.io.js"></script>
+    <style>
+        .info {
+            font-size: 20px;
+        }
+        
+        #background {
+            position: fixed;
+            z-index: -1;
+            top: 0;
+            left: 0;
+            font-size: 100px;
+            user-select: none;
+        }
+
+        #background div {
+            position: absolute;
+            top: 0;
+            left: 0;
+            transition-duration: 1s;
+        }
+    </style>
 </head>
 <body>
-    <div id="members"><%= room.members.length + 1 %></div>
+    <div class="info"><span id="members"><%= room.members.length + 1 %></span>/4</div>
+    <div id="background"></div>
 </body>
 <script>
     const roomid = "<%= id %>";
@@ -28,5 +50,20 @@
     socket.on("disconnect", () => {
         location.href = "/list";
     });
+
+    const san = [...Array(42).keys(), ...Array(34).keys(), ...Array(34).keys(), ...Array(34).keys()];
+    san.map(value => ({ value, sort: Math.random() })).sort((a, b) => a.sort - b.sort).map(({ value }) => value).forEach(i => {
+        const card = document.createElement("div");
+        document.getElementById('background').appendChild(card);
+        card.className = "mahjong";
+        card.innerHTML = `&#${126976 + i};`;
+        card.style.transform = `translate(${Math.random() * (1 - card.clientWidth / window.innerWidth) * 100}vw, ${Math.random() * (1 - card.clientHeight / window.innerHeight) * 100}vh) rotate(${Math.random()}turn)`;
+    });
+
+    setInterval(() => {
+        for (const card of document.getElementById('background').children) {
+            card.style.transform = `translate(${Math.random() * (1 - card.clientWidth / window.innerWidth) * 100}vw, ${Math.random() * (1 - card.clientHeight / window.innerHeight) * 100}vh) rotate(${Math.random()}turn)`;
+        }
+    }, 2000);
 </script>
 </html>
