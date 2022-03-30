@@ -343,7 +343,7 @@ io.of("/game").on('connection', socket => {
                         games[gameid].extra = "";
                         break;
                     case 19:
-                        games[gameid].shou[choosenOne].splice(games[gameid].shou[choosenOne].findIndex(games[gameid].extra), 3);
+                        games[gameid].shou[choosenOne].splice(games[gameid].shou[choosenOne].findIndex(hai => hai == games[gameid].extra), 3);
                         games[gameid].stole[choosenOne].push({ type: "g", pai: games[gameid].extra, dir: games[gameid].order - choosenOne });
                         games[gameid].extra = "";
                         break;
@@ -361,6 +361,9 @@ io.of("/game").on('connection', socket => {
             }
             io.of("/game").to(games[gameid].members[games[gameid].order]).emit("your turn", games[gameid].extra);
         }
+    });
+    socket.on("he", (gameid, playid) => {
+        const score = score(games[gameid].shou[playid], games[gameid].extra, games[gameid].stole[playid]);
     });
     socket.on("disconnecting", () => {
         const id = Object.keys(games).filter(key => games[key].members.includes(socket.id))[0];

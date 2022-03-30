@@ -184,18 +184,21 @@
             ctx.font = `${h / 5}px Arial`;
             ctx.textBaseline = "middle";
             ctx.fillText(pais[stealable.pai], w / 2, h / 3);
-            ctx.font = `${h / 6}px Arial`;
-            ctx.fillStyle = stealAvailable[15] ? selection == 15 ? "lightgreen" : "white" : "gray";
-            ctx.fillText("碰", w * 7 / 30, h * 3 / 5);
-            ctx.fillStyle = stealAvailable[19] ? selection == 19 ? "lightgreen" : "white" : "gray";
-            ctx.fillText("槓", w * 23 / 30, h * 3 / 5);
             ctx.font = `${h / 12}px Arial`;
+            ctx.fillStyle = stealAvailable[15] ? selection == 15 ? "lightgreen" : "white" : "gray";
+            ctx.fillText("碰", w * 7 / 30, h * 67 / 120);
             ctx.fillStyle = stealAvailable[16] ? selection == 16 ? "lightgreen" : "white" : "gray";
             ctx.fillText("吃", w * 13 / 30, h * 67 / 120);
             ctx.fillStyle = stealAvailable[17] ? selection == 17 ? "lightgreen" : "white" : "gray";
             ctx.fillText("吃", w / 2, h * 67 / 120);
             ctx.fillStyle = stealAvailable[18] ? selection == 18 ? "lightgreen" : "white" : "gray";
             ctx.fillText("吃", w * 17 / 30, h * 67 / 120);
+            ctx.fillStyle = stealAvailable[19] ? selection == 19 ? "lightgreen" : "white" : "gray";
+            ctx.fillText("槓", w * 23 / 30, h * 67 / 120);
+            ctx.fillStyle = "white";
+            ctx.fillText(`${pais[stealable.pai]}`, w * 7 / 30 - h / 30, h * 77 / 120);
+            ctx.fillText(`${pais[stealable.pai]}`, w * 7 / 30, h * 77 / 120);
+            ctx.fillText(`${pais[stealable.pai]}`, w * 7 / 30 + h / 30, h * 77 / 120);
             ctx.fillText(`${pais[stealable.pai]}`, w * 13 / 30 - h / 30, h * 77 / 120);
             ctx.fillText(`${pais[stealable.pai[0] + (stealable.pai[1] - -1)] || pais.ur}`, w * 13 / 30, h * 77 / 120);
             ctx.fillText(`${pais[stealable.pai[0] + (stealable.pai[1] - -2)] || pais.ur}`, w * 13 / 30 + h / 30, h * 77 / 120);
@@ -205,6 +208,10 @@
             ctx.fillText(`${pais[stealable.pai[0] + (stealable.pai[1] - 2)] || pais.ur}`, w * 17 / 30 - h / 30, h * 77 / 120);
             ctx.fillText(`${pais[stealable.pai[0] + (stealable.pai[1] - 1)] || pais.ur}`, w * 17 / 30, h * 77 / 120);
             ctx.fillText(`${pais[stealable.pai]}`, w * 17 / 30 + h / 30, h * 77 / 120);
+            ctx.fillText(`${pais[stealable.pai]}`, w * 23 / 30 - h / 30, h * 77 / 120);
+            ctx.fillText(`${pais[stealable.pai]}`, w * 23 / 30 - h / 90, h * 77 / 120);
+            ctx.fillText(`${pais[stealable.pai]}`, w * 23 / 30 + h / 90, h * 77 / 120);
+            ctx.fillText(`${pais[stealable.pai]}`, w * 23 / 30 + h / 30, h * 77 / 120);
         } else if (waiting) {
             ctx.font = `${h / 7}px Arial`;
             ctx.textBaseline = "middle";
